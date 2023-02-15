@@ -51,6 +51,8 @@ ALagCompensationDemoCharacter::ALagCompensationDemoCharacter()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
+
+
 void ALagCompensationDemoCharacter::BeginPlay()
 {
 	// Call the base class  
@@ -84,6 +86,8 @@ void ALagCompensationDemoCharacter::SetupPlayerInputComponent(class UInputCompon
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ALagCompensationDemoCharacter::Look);
 
+		//Fire
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &ALagCompensationDemoCharacter::FireButtonPressed);
 	}
 
 }
@@ -124,6 +128,6 @@ void ALagCompensationDemoCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-
-
-
+void ALagCompensationDemoCharacter::FireButtonPressed()
+{
+}
