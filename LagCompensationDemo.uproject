@@ -1,0 +1,22 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{C9850667-442F-EB06-A8EC-D1BFEC54BB2F}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "LagCompensationDemo",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		}
+	]
+}
