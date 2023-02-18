@@ -59,8 +59,6 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-			
-
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -68,10 +66,15 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	bool bIsDeath;
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	FORCEINLINE float GetSpeed() const { return GetVelocity().Length(); }
+	FORCEINLINE bool IsDeath() const {return bIsDeath; }
 };
 

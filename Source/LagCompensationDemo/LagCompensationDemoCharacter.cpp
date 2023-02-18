@@ -9,6 +9,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Weapon.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -64,6 +66,22 @@ void ALagCompensationDemoCharacter::BeginPlay()
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
+
+	if(GetMesh())
+	{
+		if(const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("WeaponSocket")))
+		{
+			if(WeaponClass)
+			{
+				Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+				if(Weapon)
+				{
+					HandSocket->AttachActor(Weapon, GetMesh());
+				}
+			}
+			
 		}
 	}
 }
