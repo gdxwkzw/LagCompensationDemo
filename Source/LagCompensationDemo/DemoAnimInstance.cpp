@@ -3,3 +3,21 @@
 
 #include "DemoAnimInstance.h"
 
+#include "LagCompensationDemoCharacter.h"
+
+void UDemoAnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+
+	DemoCharacter = Cast<ALagCompensationDemoCharacter>(TryGetPawnOwner());
+}
+
+void UDemoAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+	DemoCharacter = DemoCharacter == nullptr ? Cast<ALagCompensationDemoCharacter>(TryGetPawnOwner()) : DemoCharacter;
+	if(DemoCharacter == nullptr) return;
+	
+	Speed = DemoCharacter->GetSpeed();
+	bIsDeath = DemoCharacter->IsDeath();
+}

@@ -13,4 +13,15 @@ UCLASS()
 class LAGCOMPENSATIONDEMO_API UDemoAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
+
+protected:
+	UPROPERTY()
+	class ALagCompensationDemoCharacter* DemoCharacter;
+	UPROPERTY(BlueprintReadOnly)
+	float Speed = 0.f;
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsDeath = false;
+public:
+	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 };

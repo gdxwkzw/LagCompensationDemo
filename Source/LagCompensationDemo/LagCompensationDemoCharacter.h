@@ -66,6 +66,8 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	bool bIsDeath;
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -73,5 +75,6 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	FORCEINLINE float GetSpeed() const { return GetVelocity().Length(); }
+	FORCEINLINE bool IsDeath() const {return bIsDeath; }
 };
 
