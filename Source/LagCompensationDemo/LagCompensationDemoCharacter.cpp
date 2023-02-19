@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Weapon.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Net/UnrealNetwork.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -51,6 +52,8 @@ ALagCompensationDemoCharacter::ALagCompensationDemoCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	bUseControllerRotationYaw = true;
 }
 
 
@@ -69,7 +72,7 @@ void ALagCompensationDemoCharacter::BeginPlay()
 		}
 	}
 
-	if(GetMesh())
+	if(HasAuthority() && GetMesh())
 	{
 		if(const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(FName("WeaponSocket")))
 		{
@@ -79,9 +82,41 @@ void ALagCompensationDemoCharacter::BeginPlay()
 				if(Weapon)
 				{
 					HandSocket->AttachActor(Weapon, GetMesh());
+					Weapon->SetOwner(this);
 				}
 			}
 			
+		}
+	}
+}
+
+void ALagCompensationDemoCharacter::OnRep_EnableMovement()
+{
+	Die();
+}
+
+void ALagCompensationDemoCharacter::Die()
+{
+	bEnableMovement = false;
+	if(HasAuthority())
+	{
+		bIsDeath = true;
+	}
+	
+	if(GetMovementComponent())
+	{
+		GetMovementComponent()->StopMovementImmediately();
+	}
+}
+
+void ALagCompensationDemoCharacter::PlayHitReact()
+{
+	if(!GetMesh()) return;
+	if(UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if(HitReactMontage)
+		{
+			AnimInstance->Montage_Play(HitReactMontage);
 		}
 	}
 }
@@ -112,6 +147,7 @@ void ALagCompensationDemoCharacter::SetupPlayerInputComponent(class UInputCompon
 
 void ALagCompensationDemoCharacter::Move(const FInputActionValue& Value)
 {
+	if(!bEnableMovement) return;
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -148,4 +184,15 @@ void ALagCompensationDemoCharacter::Look(const FInputActionValue& Value)
 
 void ALagCompensationDemoCharacter::FireButtonPressed()
 {
+	if(Weapon)
+	{
+		Weapon->Fire();
+	}
+}
+
+void ALagCompensationDemoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ALagCompensationDemoCharacter, Weapon);
+	DOREPLIFETIME(ALagCompensationDemoCharacter, bIsDeath);
 }

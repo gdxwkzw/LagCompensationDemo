@@ -4,6 +4,7 @@
 #include "DemoAnimInstance.h"
 
 #include "LagCompensationDemoCharacter.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 void UDemoAnimInstance::NativeInitializeAnimation()
 {
@@ -20,4 +21,9 @@ void UDemoAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	
 	Speed = DemoCharacter->GetSpeed();
 	bIsDeath = DemoCharacter->IsDeath();
+	if(DemoCharacter->GetMovementComponent())
+	{
+		bIsInAir = DemoCharacter->GetMovementComponent()->IsFalling();
+	}
+	
 }

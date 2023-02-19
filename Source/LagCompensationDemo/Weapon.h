@@ -22,13 +22,31 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USkeletalMeshComponent* WeaponMesh;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* MuzzleFlash;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* FireSoundCue;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 public:
 	void Fire();
 
+	void LocalFire(FVector TraceEnd);
+
+	UFUNCTION(Server, Reliable)
+	void ServerFire(FVector TraceEnd);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire(FVector TraceEnd);
+
 	UPROPERTY(EditAnywhere, Category = Weapon)
 	bool bUseServerSideRewind = false;
-	
+
+	void HitConfirmed(FVector TraceEnd, class ALagCompensationDemoCharacter* HitCharacter);
+private:
+	FHitResult TraceEndResult;
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 };
