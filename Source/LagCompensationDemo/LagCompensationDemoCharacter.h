@@ -25,7 +25,7 @@ class ALagCompensationDemoCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AWeapon> WeaponClass;
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	class AWeapon* Weapon;
 	
 	/** MappingContext */
@@ -50,10 +50,12 @@ class ALagCompensationDemoCharacter : public ACharacter
 
 public:
 	ALagCompensationDemoCharacter();
-	
 	void FireButtonPressed();
+	void Die();
+	void PlayHitReact();
 protected:
-
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
@@ -66,8 +68,15 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	class UAnimMontage* HitReactMontage;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_EnableMovement)
 	bool bIsDeath;
 
+	bool bEnableMovement = true;
+
+	UFUNCTION()
+	void OnRep_EnableMovement();
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

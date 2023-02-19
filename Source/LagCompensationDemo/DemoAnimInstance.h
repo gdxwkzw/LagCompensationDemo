@@ -21,6 +21,8 @@ protected:
 	float Speed = 0.f;
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsDeath = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsInAir = false;
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
