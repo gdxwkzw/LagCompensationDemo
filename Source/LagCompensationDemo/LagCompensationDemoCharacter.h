@@ -21,8 +21,15 @@ class ALagCompensationDemoCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 
+	/** LagCompensation */
+	UPROPERTY(VisibleAnywhere)
+	class ULagCompensationComponent* LagCompensationComponent;
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	class UCapsuleComponent* LagCompensationHitBox;
+
 	/** Weapon */
-	UPROPERTY(EditAnywhere, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AWeapon> WeaponClass;
 
 	UPROPERTY(Replicated)
@@ -47,7 +54,6 @@ class ALagCompensationDemoCharacter : public ACharacter
 	/** Fire Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* FireAction;
-
 public:
 	ALagCompensationDemoCharacter();
 	void FireButtonPressed();
@@ -84,6 +90,8 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	FORCEINLINE float GetSpeed() const { return GetVelocity().Length(); }
-	FORCEINLINE bool IsDeath() const {return bIsDeath; }
+	FORCEINLINE bool IsDeath() const { return bIsDeath; }
+	FORCEINLINE UCapsuleComponent* GetLagCompensationHitBox() const { return LagCompensationHitBox; }
+	void SetLagCompensationHitBox(FVector Location);
 };
 

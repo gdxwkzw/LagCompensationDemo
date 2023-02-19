@@ -6,6 +6,20 @@
 #include "Components/ActorComponent.h"
 #include "LagCompensationComponent.generated.h"
 
+USTRUCT()
+struct FFramePackage
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float Time = 0.f;
+
+	UPROPERTY()
+	FVector HitBoxLocation;
+
+	UPROPERTY()
+	class ALagCompensationDemoCharacter* DemoCharacter = nullptr;
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LAGCOMPENSATIONDEMO_API ULagCompensationComponent : public UActorComponent
@@ -24,5 +38,12 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+private:
+	UPROPERTY()
+	class ALagCompensationDemoCharacter* DemoCharacter;
+
+	TDoubleLinkedList<FFramePackage> FrameHistory;
+
+	UPROPERTY(EditAnywhere)
+	float MaxRecordTime = 4.f;
 };
