@@ -6,6 +6,7 @@
 #include "LagCompensationDemoCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #define TRACE_LENGTH 99999.f
 
@@ -60,8 +61,10 @@ void AWeapon::LocalFire(FVector TraceEnd)
 		ECollisionChannel::ECC_Pawn
 	);
 
+	FVector BeamEnd = TraceEnd;
 	if(HitResult.bBlockingHit)
 	{
+		BeamEnd = HitResult.Location;
 		if(MuzzleFlash)
 		{
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleFlash, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation());
@@ -70,6 +73,15 @@ void AWeapon::LocalFire(FVector TraceEnd)
 		if(ALagCompensationDemoCharacter* HitCharacter = Cast<ALagCompensationDemoCharacter>(HitResult.GetActor()))
 		{
 			HitCharacter->PlayHitReact();
+		}
+	}
+
+	if(BeamParticles)
+	{
+		UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BeamParticles, SocketTransform);
+		if(Beam)
+		{
+			Beam->SetVectorParameter(FName("Target"), BeamEnd);
 		}
 	}
 }
@@ -169,7 +181,7 @@ void AWeapon::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			Start,
 			End,
 			ECollisionChannel::ECC_Visibility
-			);
+		);
 		if(!TraceHitResult.bBlockingHit)
 		{
 			TraceHitResult.ImpactPoint = End;
