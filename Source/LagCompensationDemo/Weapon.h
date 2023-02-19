@@ -24,6 +24,9 @@ public:
 	class USkeletalMeshComponent* WeaponMesh;
 
 	UPROPERTY(EditAnywhere)
+	UParticleSystem* BeamParticles;
+
+	UPROPERTY(EditAnywhere)
 	UParticleSystem* MuzzleFlash;
 
 	UPROPERTY(EditAnywhere)
