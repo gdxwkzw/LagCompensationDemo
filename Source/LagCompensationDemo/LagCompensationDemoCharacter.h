@@ -74,6 +74,7 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	UPROPERTY(EditAnywhere)
 	class UAnimMontage* HitReactMontage;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_EnableMovement)
@@ -93,5 +94,6 @@ public:
 	FORCEINLINE bool IsDeath() const { return bIsDeath; }
 	FORCEINLINE UCapsuleComponent* GetLagCompensationHitBox() const { return LagCompensationHitBox; }
 	void SetLagCompensationHitBox(FVector Location);
+	FORCEINLINE ULagCompensationComponent* GetLagCompensationComponent() const { return LagCompensationComponent; }
 };
 

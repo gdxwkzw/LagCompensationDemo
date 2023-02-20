@@ -3,6 +3,10 @@
 
 #include "LagCompensationComponent.h"
 
+#include "LagCompensationDemoCharacter.h"
+#include "Components/CapsuleComponent.h"
+#define ECC_LagCompensationHitBox ECC_GameTraceChannel1
+
 // Sets default values for this component's properties
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -13,6 +17,167 @@ ULagCompensationComponent::ULagCompensationComponent()
 	// ...
 }
 
+void ULagCompensationComponent::CacheFramePackage(ALagCompensationDemoCharacter* Character,
+	FFramePackage& Package)
+{
+	if(Character)
+	{
+		Package.Time = GetWorld()->GetTimeSeconds();
+		Package.Character = Character;
+		Package.HitBoxLocation = Character->GetLagCompensationHitBox()->GetComponentLocation();
+	}
+}
+
+void ULagCompensationComponent::SaveFramePackage()
+{
+	DemoCharacter = DemoCharacter == nullptr ? Cast<ALagCompensationDemoCharacter>(GetOwner()) : DemoCharacter;
+	if(DemoCharacter)
+	{
+		FFramePackage ThisFrame;
+		CacheFramePackage(DemoCharacter, ThisFrame);
+		if(FrameHistory.Num() < 1)
+		{
+			FrameHistory.AddHead(ThisFrame);
+		}
+		else
+		{
+			float HistoryLength = FrameHistory.GetHead()->GetValue().Time - FrameHistory.GetTail()->GetValue().Time;
+			while(HistoryLength > MaxRecordTime && FrameHistory.Num() > 0)
+			{
+				FrameHistory.RemoveNode(FrameHistory.GetTail());
+				HistoryLength = FrameHistory.GetHead()->GetValue().Time - FrameHistory.GetTail()->GetValue().Time;
+			}
+			FrameHistory.AddHead(ThisFrame);
+		}
+		ShowFramePackage(ThisFrame);
+	}
+}
+
+void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package)
+{
+	DemoCharacter = DemoCharacter == nullptr ? Cast<ALagCompensationDemoCharacter>(GetOwner()) : DemoCharacter;
+	if(DemoCharacter)
+	{
+		DrawDebugCapsule(
+			GetWorld(),
+			Package.HitBoxLocation,
+			DemoCharacter->GetLagCompensationHitBox()->GetScaledCapsuleHalfHeight(),
+			DemoCharacter->GetLagCompensationHitBox()->GetScaledCapsuleRadius(),
+			DemoCharacter->GetLagCompensationHitBox()->GetComponentRotation().Quaternion(),
+			FColor::Red,
+			false,
+			MaxRecordTime
+		);
+	}
+	
+}
+
+FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage& OlderFrame,
+	const FFramePackage& YoungerFrame, float HitTime)
+{
+	const float Distance = YoungerFrame.Time - OlderFrame.Time;
+	const float InterpFraction = FMath::Clamp((HitTime - OlderFrame.Time) / Distance, 0.f, 1.f);
+	FFramePackage InterpFramePackage;
+	InterpFramePackage.Character = OlderFrame.Character;
+	InterpFramePackage.Time = HitTime;
+	InterpFramePackage.HitBoxLocation = FMath::VInterpTo(OlderFrame.HitBoxLocation, YoungerFrame.HitBoxLocation, 1.f, InterpFraction);
+
+	return InterpFramePackage;
+}
+
+FFramePackage ULagCompensationComponent::GetFrameToCheck(ALagCompensationDemoCharacter* HitCharacter, float HitTime)
+{
+	bool bReturn = HitCharacter == nullptr ||
+		HitCharacter->GetLagCompensationComponent() == nullptr ||
+		HitCharacter->GetLagCompensationComponent()->FrameHistory.GetHead() == nullptr ||
+		HitCharacter->GetLagCompensationComponent()->FrameHistory.GetTail() == nullptr;
+	if(bReturn) return FFramePackage();
+
+	// Frame package that we check to verify a hit
+	FFramePackage FrameToCheck;
+	FrameToCheck.Character = HitCharacter;
+	bool bShouldInterpolate = true;
+
+	// Frame history of the HitCharacter
+	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagCompensationComponent()->FrameHistory;
+	const float OldestHistoryTime = History.GetTail()->GetValue().Time;
+	const float NewestHistoryTime = History.GetHead()->GetValue().Time;
+
+	if(OldestHistoryTime > HitTime)
+	{
+		return FFramePackage();
+	}
+
+	if(OldestHistoryTime == HitTime)
+	{
+		FrameToCheck = History.GetTail()->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	if(NewestHistoryTime <= HitTime)
+	{
+		FrameToCheck = History.GetHead()->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Older = History.GetHead();
+	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Younger = Older;
+
+	// Match: OlderTime <= HitTime < YoungerTime
+	while(Older->GetValue().Time > HitTime && Older->GetNextNode() != nullptr)
+	{
+		Older = Older->GetNextNode();	
+	}
+	
+	if(Older->GetPrevNode() != nullptr)
+	{
+		Younger = Older->GetPrevNode();
+	}
+
+	if(Older->GetValue().Time == HitTime) // OlderTime == HitTime
+	{
+		FrameToCheck = Older->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	// OlderTime < HitTime < YoungerTime
+	if(bShouldInterpolate)
+	{
+		FrameToCheck = InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
+	}
+
+	return FrameToCheck;
+}
+
+void ULagCompensationComponent::ServerHitComfirm_Implementation(ALagCompensationDemoCharacter* HitCharacter,
+                                                                const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& TraceEnd, float HitTime)
+{
+	if(HitCharacter == nullptr) return;
+	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
+	FFramePackage CurrentFrame;
+	CacheFramePackage(HitCharacter, CurrentFrame);
+
+	// Move the hitBox to the time of the check
+	HitCharacter->SetLagCompensationHitBox(FrameToCheck.HitBoxLocation);
+	HitCharacter->GetLagCompensationHitBox()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	
+	FHitResult ConfirmHitResult;
+	GetWorld()->LineTraceSingleByChannel(
+		ConfirmHitResult,
+		TraceStart,
+		TraceEnd,
+		ECollisionChannel::ECC_LagCompensationHitBox
+	);
+
+	if(ConfirmHitResult.bBlockingHit)
+	{
+		// Reset hitbox
+		HitCharacter->SetLagCompensationHitBox(CurrentFrame.HitBoxLocation);
+		HitCharacter->GetLagCompensationHitBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		HitCharacter->Die();
+	}
+}
 
 // Called when the game starts
 void ULagCompensationComponent::BeginPlay()
@@ -28,7 +193,7 @@ void ULagCompensationComponent::BeginPlay()
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	SaveFramePackage();
 	// ...
 }
 

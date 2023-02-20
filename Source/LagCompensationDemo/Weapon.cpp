@@ -3,6 +3,8 @@
 
 #include "Weapon.h"
 
+#include "DemoPlayerController.h"
+#include "LagCompensationComponent.h"
 #include "LagCompensationDemoCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
@@ -118,6 +120,21 @@ void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 			if(!bUseServerSideRewind)
 			{
 				HitConfirmed(TraceEnd, HitCharacter);
+			}
+			else
+			{
+				if(ALagCompensationDemoCharacter* OwnerCharacter = GetOwner<ALagCompensationDemoCharacter>())
+				{
+					if(ADemoPlayerController* OwnerController = OwnerCharacter->GetController<ADemoPlayerController>())
+					{
+						HitCharacter->GetLagCompensationComponent()->ServerHitComfirm(
+							HitCharacter,
+							SocketTransform.GetLocation(),
+							TraceEnd,
+							OwnerController->GetServerTime() - OwnerController->SingleTripTime
+						);
+					}
+				}
 			}
 		}
 	}
