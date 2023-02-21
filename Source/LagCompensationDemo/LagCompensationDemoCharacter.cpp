@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "LagCompensationComponent.h"
+#include "LagCompensationDemoGameMode.h"
 #include "Weapon.h"
 #include "Components/SphereComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -101,9 +102,21 @@ void ALagCompensationDemoCharacter::BeginPlay()
 	}
 }
 
-void ALagCompensationDemoCharacter::OnRep_EnableMovement()
+void ALagCompensationDemoCharacter::OnRep_IsDeath()
 {
-	Die();
+	if(bIsDeath)
+	{
+		Die();
+	}
+}
+
+void ALagCompensationDemoCharacter::RespawnTimerFinished()
+{
+	if(ALagCompensationDemoGameMode* DemoGameMode = GetWorld()->GetAuthGameMode<ALagCompensationDemoGameMode>())
+	{
+		DemoGameMode->RequestRespawn(this, Controller);
+	}
+	
 }
 
 void ALagCompensationDemoCharacter::SetLagCompensationHitBox(FVector Location)
@@ -117,6 +130,12 @@ void ALagCompensationDemoCharacter::Die()
 	if(HasAuthority())
 	{
 		bIsDeath = true;
+		GetWorldTimerManager().SetTimer(
+			RespawnTimer,
+			this,
+			&ThisClass::RespawnTimerFinished,
+			5.f
+		);
 	}
 	
 	if(GetMovementComponent())
@@ -187,6 +206,7 @@ void ALagCompensationDemoCharacter::Move(const FInputActionValue& Value)
 
 void ALagCompensationDemoCharacter::Look(const FInputActionValue& Value)
 {
+	if(!bEnableMovement) return;
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -200,6 +220,7 @@ void ALagCompensationDemoCharacter::Look(const FInputActionValue& Value)
 
 void ALagCompensationDemoCharacter::FireButtonPressed()
 {
+	if(!bEnableMovement) return;
 	if(Weapon)
 	{
 		Weapon->Fire();
@@ -211,4 +232,10 @@ void ALagCompensationDemoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ALagCompensationDemoCharacter, Weapon);
 	DOREPLIFETIME(ALagCompensationDemoCharacter, bIsDeath);
+}
+
+void ALagCompensationDemoCharacter::Destroyed()
+{
+	Weapon->Destroy();
+	Super::Destroyed();
 }
