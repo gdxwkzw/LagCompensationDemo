@@ -13,6 +13,7 @@ class ALagCompensationDemoGameMode : public AGameModeBase
 
 public:
 	ALagCompensationDemoGameMode();
+	void RequestRespawn(ACharacter* RespawnedCharacter, AController* Respawned);
 };
 
 

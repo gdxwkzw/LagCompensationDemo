@@ -61,7 +61,7 @@ public:
 	void PlayHitReact();
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+	virtual void Destroyed() override;
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
@@ -77,13 +77,18 @@ protected:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* HitReactMontage;
 	
-	UPROPERTY(ReplicatedUsing = OnRep_EnableMovement)
+	UPROPERTY(ReplicatedUsing = OnRep_IsDeath)
 	bool bIsDeath;
+
+	UFUNCTION()
+	void OnRep_IsDeath();
 
 	bool bEnableMovement = true;
 
+	FTimerHandle RespawnTimer;
+
 	UFUNCTION()
-	void OnRep_EnableMovement();
+	void RespawnTimerFinished();
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
