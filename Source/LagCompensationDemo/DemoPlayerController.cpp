@@ -3,6 +3,8 @@
 
 #include "DemoPlayerController.h"
 
+#include "UI_Ping.h"
+
 
 void ADemoPlayerController::ServerRequestServerTime_Implementation(float TimeOfClientRequest)
 {
@@ -17,6 +19,13 @@ void ADemoPlayerController::ClientRequestServerTime_Implementation(float TimeOfC
 	SingleTripTime = 0.5f * RoundTripTime;
 	float CurrentServerTime = TimeServerReceivedClientRequest + RoundTripTime;
 	ClientServerDelta = GetWorld()->GetTimeSeconds() - CurrentServerTime;
+
+	//Update PingHUD
+	DemoHUD = DemoHUD == nullptr ? GetHUD<ADemoHUD>() : DemoHUD;
+	if(DemoHUD && DemoHUD->PingUI)
+	{
+		DemoHUD->PingUI->SetHUDPing(SingleTripTime);
+	}
 }
 
 float ADemoPlayerController::GetServerTime()
@@ -49,4 +58,15 @@ void ADemoPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	CheckTimeSync(DeltaSeconds);
+}
+
+void ADemoPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	DemoHUD = DemoHUD == nullptr ? GetHUD<ADemoHUD>() : DemoHUD;
+	if(DemoHUD)
+	{
+		DemoHUD->AddPingUI();
+	}
 }

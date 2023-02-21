@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "LagCompensationComponent.h"
 
 #include "LagCompensationDemoCharacter.h"
@@ -49,7 +48,7 @@ void ULagCompensationComponent::SaveFramePackage()
 			}
 			FrameHistory.AddHead(ThisFrame);
 		}
-		ShowFramePackage(ThisFrame);
+		//ShowFramePackage(ThisFrame);
 	}
 }
 
@@ -93,12 +92,12 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ALagCompensationDemoCha
 		HitCharacter->GetLagCompensationComponent()->FrameHistory.GetTail() == nullptr;
 	if(bReturn) return FFramePackage();
 
-	// Frame package that we check to verify a hit
+	// Frame package that we check to verify a hit 待验证的帧记录
 	FFramePackage FrameToCheck;
 	FrameToCheck.Character = HitCharacter;
 	bool bShouldInterpolate = true;
 
-	// Frame history of the HitCharacter
+	// Frame history of the HitCharacter 该玩家在服务器的帧历史记录
 	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagCompensationComponent()->FrameHistory;
 	const float OldestHistoryTime = History.GetTail()->GetValue().Time;
 	const float NewestHistoryTime = History.GetHead()->GetValue().Time;
@@ -123,7 +122,7 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ALagCompensationDemoCha
 	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Older = History.GetHead();
 	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Younger = Older;
 
-	// Match: OlderTime <= HitTime < YoungerTime
+	// Match: OlderTime <= HitTime < YoungerTime 最终OlderTime和YoungerTime这两游标要匹配成这样
 	while(Older->GetValue().Time > HitTime && Older->GetNextNode() != nullptr)
 	{
 		Older = Older->GetNextNode();	
@@ -157,7 +156,7 @@ void ULagCompensationComponent::ServerHitComfirm_Implementation(ALagCompensation
 	FFramePackage CurrentFrame;
 	CacheFramePackage(HitCharacter, CurrentFrame);
 
-	// Move the hitBox to the time of the check
+	// Move the hitBox to the time of the check 临时把HitBox的位置回退到检查时间并启用碰撞检测
 	HitCharacter->SetLagCompensationHitBox(FrameToCheck.HitBoxLocation);
 	HitCharacter->GetLagCompensationHitBox()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	
@@ -171,7 +170,7 @@ void ULagCompensationComponent::ServerHitComfirm_Implementation(ALagCompensation
 
 	if(ConfirmHitResult.bBlockingHit)
 	{
-		// Reset hitbox
+		// Reset hitbox 把HitBox位置挪回来并关闭碰撞检测
 		HitCharacter->SetLagCompensationHitBox(CurrentFrame.HitBoxLocation);
 		HitCharacter->GetLagCompensationHitBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
