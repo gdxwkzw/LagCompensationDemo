@@ -3,6 +3,8 @@
 
 #include "DemoHUD.h"
 
+#include "UI_Ping.h"
+
 void ADemoHUD::DrawHUD()
 {
 	Super::DrawHUD();
@@ -33,5 +35,18 @@ void ADemoHUD::DrawHUD()
 			1.f,
 			FColor::Black
 		);
+	}
+}
+
+void ADemoHUD::AddPingUI()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if(PlayerController && PlayerController->IsLocalController() && PingUIClass)
+	{
+		PingUI = CreateWidget<UUI_Ping>(PlayerController, PingUIClass);
+		if(PingUI)
+		{
+			PingUI->AddToViewport();
+		}
 	}
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DemoHUD.h"
 #include "GameFramework/PlayerController.h"
 #include "DemoPlayerController.generated.h"
 
@@ -32,4 +33,9 @@ public:
 	float TimeSyncRunningTime = 0.f;
 	void CheckTimeSync(float DeltaTime);
 	virtual void Tick(float DeltaSeconds) override;
+
+	UPROPERTY()
+	ADemoHUD* DemoHUD;
+protected:
+	virtual void BeginPlay() override;
 };

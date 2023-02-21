@@ -18,5 +18,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	class UTexture2D* Texture;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UUI_Ping> PingUIClass;
+	
+	UPROPERTY()
+	UUI_Ping* PingUI;
+
 	virtual void DrawHUD() override;
+	void AddPingUI();
 };
