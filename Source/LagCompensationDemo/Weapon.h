@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class ALagCompensationDemoCharacter;
+
 UCLASS()
 class LAGCOMPENSATIONDEMO_API AWeapon : public AActor
 {
@@ -45,11 +47,21 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(FVector TraceEnd);
 
-	UPROPERTY(EditAnywhere, Category = Weapon)
-	bool bUseServerSideRewind = false;
+	UFUNCTION(Server, Reliable)
+	void ServerFireWithLagCompensation(ALagCompensationDemoCharacter* HitCharacter, FVector TraceEnd, float HitTime);
 
-	void HitConfirmed(FVector TraceEnd, class ALagCompensationDemoCharacter* HitCharacter);
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	bool bUseLagCompensation = false;
 private:
 	FHitResult TraceEndResult;
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
+
+	/** Debug Begin*/
+public:
+	UPROPERTY(EditAnywhere, Category = Debug)
+	bool bClientDrawDebugCapsule;
+	
+	UFUNCTION(Client, Reliable)
+	void ClientDrawDebugCapsule(const FVector& Center, float HalfHeight, float Radius, const FQuat& Rotation, const FColor& Color, bool bPersistentLines = false, float LiftTime = -1);
+	/** Debug End*/
 };

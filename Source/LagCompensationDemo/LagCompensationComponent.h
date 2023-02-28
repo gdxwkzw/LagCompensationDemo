@@ -13,13 +13,13 @@ struct FFramePackage
 	GENERATED_BODY()
 
 	UPROPERTY()
+	ALagCompensationDemoCharacter* Character = nullptr;
+
+	UPROPERTY()
 	float Time = 0.f;
 
 	UPROPERTY()
 	FVector HitBoxLocation;
-
-	UPROPERTY()
-	class ALagCompensationDemoCharacter* Character = nullptr;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -53,10 +53,10 @@ public:
 
 private:
 	UPROPERTY()
-	class ALagCompensationDemoCharacter* DemoCharacter;
+	ALagCompensationDemoCharacter* DemoCharacter;
 
 	TDoubleLinkedList<FFramePackage> FrameHistory;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = LagCompensation)
 	float MaxRecordTime = 4.f;
 };

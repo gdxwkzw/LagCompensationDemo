@@ -3,6 +3,7 @@
 #include "LagCompensationComponent.h"
 
 #include "LagCompensationDemoCharacter.h"
+#include "Weapon.h"
 #include "Components/CapsuleComponent.h"
 #define ECC_LagCompensationHitBox ECC_GameTraceChannel1
 
@@ -67,6 +68,20 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package)
 			false,
 			MaxRecordTime
 		);
+
+		AWeapon* Weapon = GetOwner<AWeapon>();
+		if(Weapon && Weapon->bClientDrawDebugCapsule)
+		{
+			Weapon->ClientDrawDebugCapsule(
+				Package.HitBoxLocation,
+				DemoCharacter->GetLagCompensationHitBox()->GetScaledCapsuleHalfHeight(),
+				DemoCharacter->GetLagCompensationHitBox()->GetScaledCapsuleRadius(),
+				DemoCharacter->GetLagCompensationHitBox()->GetComponentRotation().Quaternion(),
+				FColor::Red,
+				false,
+				MaxRecordTime
+			);
+		}
 	}
 	
 }
@@ -153,6 +168,7 @@ void ULagCompensationComponent::ServerHitComfirm_Implementation(ALagCompensation
 {
 	if(HitCharacter == nullptr) return;
 	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
+	ShowFramePackage(FrameToCheck);
 	FFramePackage CurrentFrame;
 	CacheFramePackage(HitCharacter, CurrentFrame);
 
@@ -170,12 +186,12 @@ void ULagCompensationComponent::ServerHitComfirm_Implementation(ALagCompensation
 
 	if(ConfirmHitResult.bBlockingHit)
 	{
-		// Reset hitbox 把HitBox位置挪回来并关闭碰撞检测
-		HitCharacter->SetLagCompensationHitBox(CurrentFrame.HitBoxLocation);
-		HitCharacter->GetLagCompensationHitBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 		HitCharacter->Die();
 	}
+	
+	// Reset hitbox 把HitBox位置挪回来并关闭碰撞检测
+	HitCharacter->SetLagCompensationHitBox(CurrentFrame.HitBoxLocation);
+	HitCharacter->GetLagCompensationHitBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts

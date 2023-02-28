@@ -236,6 +236,10 @@ void ALagCompensationDemoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeP
 
 void ALagCompensationDemoCharacter::Destroyed()
 {
-	Weapon->Destroy();
+	if(Weapon)
+	{
+		Weapon->Destroy();
+	}
+	
 	Super::Destroyed();
 }

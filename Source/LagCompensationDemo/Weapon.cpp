@@ -4,8 +4,11 @@
 #include "Weapon.h"
 
 #include "DemoPlayerController.h"
+#include "EngineUtils.h"
 #include "LagCompensationComponent.h"
 #include "LagCompensationDemoCharacter.h"
+#include "Abilities/GameplayAbilityTargetTypes.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -36,7 +39,27 @@ void AWeapon::Fire()
 {
 	TraceUnderCrosshairs(TraceEndResult);
 	LocalFire(TraceEndResult.Location);
-	ServerFire(TraceEndResult.Location);
+	if(!bUseLagCompensation)
+	{
+		ServerFire(TraceEndResult.Location);
+	}
+	else
+	{
+		ALagCompensationDemoCharacter* HitCharacter = Cast<ALagCompensationDemoCharacter>(TraceEndResult.GetActor());
+		if(ALagCompensationDemoCharacter* OwnerCharacter = GetOwner<ALagCompensationDemoCharacter>())
+		{
+			if(ADemoPlayerController* OwnerController = OwnerCharacter->GetController<ADemoPlayerController>())
+			{
+				ServerFireWithLagCompensation(
+					HitCharacter,
+					TraceEndResult.Location,
+					OwnerController->GetServerTime() - OwnerController->SingleTripTime
+				);
+			}
+		}
+		
+	}
+	
 }
 
 void AWeapon::LocalFire(FVector TraceEnd)
@@ -64,8 +87,10 @@ void AWeapon::LocalFire(FVector TraceEnd)
 	);
 
 	FVector BeamEnd = TraceEnd;
+	DrawDebugLine(GetWorld(), SocketTransform.GetLocation(), TraceEnd, FColor::Green, true);
 	if(HitResult.bBlockingHit)
 	{
+		DrawDebugSphere(GetWorld(), HitResult.Location, 8.f, 12, FColor::Orange);
 		BeamEnd = HitResult.Location;
 		if(MuzzleFlash)
 		{
@@ -100,7 +125,8 @@ void AWeapon::MulticastFire_Implementation(FVector TraceEnd)
 void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 {
 	MulticastFire(TraceEnd);
-	if(WeaponMesh == nullptr) return;
+
+	if(WeaponMesh == nullptr || bUseLagCompensation) return;
 	const USkeletalMeshSocket* MuzzleFlashSocket = WeaponMesh->GetSocketByName(FName("MuzzleFlash"));
 	if(MuzzleFlashSocket == nullptr) return;
 	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(WeaponMesh);
@@ -112,54 +138,60 @@ void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 		TraceEnd,
 		ECollisionChannel::ECC_Pawn
 	);
+
+	/** When lag compensation is not used,
+	 * the position of the character on the server
+	 * at the time of hit confimed is displayed.
+	 * 不使用延迟补偿时展示做判定时其他角色在服务器上的位置 */
+	if(bClientDrawDebugCapsule)
+	{
+		for(TActorIterator<ALagCompensationDemoCharacter> Iterator(GetWorld()); Iterator; ++Iterator)
+		{
+			ALagCompensationDemoCharacter* OtherCharacter = *Iterator;
+			if(OtherCharacter && OtherCharacter != GetOwner())
+			{
+				ClientDrawDebugCapsule(
+					OtherCharacter->GetCapsuleComponent()->GetComponentLocation(),
+					OtherCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight(),
+					OtherCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius(),
+					OtherCharacter->GetCapsuleComponent()->GetComponentRotation().Quaternion(),
+					FColor::Red,
+					true
+				);
+			}
+		}
+	}
+	/** ---------------------------------------------- */
 
 	if(HitResult.bBlockingHit)
 	{
 		if(ALagCompensationDemoCharacter* HitCharacter = Cast<ALagCompensationDemoCharacter>(HitResult.GetActor()))
 		{
-			if(!bUseServerSideRewind)
-			{
-				HitConfirmed(TraceEnd, HitCharacter);
-			}
-			else
-			{
-				if(ALagCompensationDemoCharacter* OwnerCharacter = GetOwner<ALagCompensationDemoCharacter>())
-				{
-					if(ADemoPlayerController* OwnerController = OwnerCharacter->GetController<ADemoPlayerController>())
-					{
-						HitCharacter->GetLagCompensationComponent()->ServerHitComfirm(
-							HitCharacter,
-							SocketTransform.GetLocation(),
-							TraceEnd,
-							OwnerController->GetServerTime() - OwnerController->SingleTripTime
-						);
-					}
-				}
-			}
+			HitCharacter->Die();
 		}
 	}
 }
 
-void AWeapon::HitConfirmed(FVector TraceEnd, ALagCompensationDemoCharacter* HitCharacter)
+void AWeapon::ServerFireWithLagCompensation_Implementation(ALagCompensationDemoCharacter* HitCharacter, FVector TraceEnd, float HitTime)
 {
-	if(WeaponMesh == nullptr || HitCharacter == nullptr) return;
+	MulticastFire(TraceEnd);
+
+	if(WeaponMesh == nullptr || HitCharacter == nullptr || !bUseLagCompensation) return;
 	const USkeletalMeshSocket* MuzzleFlashSocket = WeaponMesh->GetSocketByName(FName("MuzzleFlash"));
 	if(MuzzleFlashSocket == nullptr) return;
 	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(WeaponMesh);
-	FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(
-		HitResult,
-		SocketTransform.GetLocation(),
-		TraceEnd,
-		ECollisionChannel::ECC_Pawn
-	);
 
-	if(HitResult.bBlockingHit)
+	if(HitCharacter->GetLagCompensationComponent())
 	{
-		if(HitResult.GetActor() == HitCharacter && HasAuthority())
-		{
-			HitCharacter->Die();
-		}
+		/**  Use the lag compensation component to comfirm hit with lag compensation
+		 *使用延迟补偿组件做带延迟补偿的射击判定
+		 */
+		HitCharacter->GetLagCompensationComponent()->ServerHitComfirm(
+			HitCharacter,
+			SocketTransform.GetLocation(),
+			TraceEnd,
+			HitTime
+		);
 	}
 }
 
@@ -201,9 +233,24 @@ void AWeapon::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		);
 		if(!TraceHitResult.bBlockingHit)
 		{
-			TraceHitResult.ImpactPoint = End;
+			TraceHitResult.Location = End;
 		}
 	}
+}
+
+void AWeapon::ClientDrawDebugCapsule_Implementation(const FVector& Center, float HalfHeight, float Radius,
+	const FQuat& Rotation, const FColor& Color, bool bPersistentLines, float LiftTime)
+{
+	DrawDebugCapsule(
+		GetWorld(),
+		Center,
+		HalfHeight,
+		Radius,
+		Rotation,
+		Color,
+		bPersistentLines,
+		LiftTime
+	);
 }
 
 // Called every frame
