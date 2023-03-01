@@ -11,6 +11,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #define TRACE_LENGTH 99999.f
@@ -33,6 +34,12 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWeapon, bUseLagCompensation);
 }
 
 void AWeapon::Fire()
@@ -150,7 +157,7 @@ void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 			ALagCompensationDemoCharacter* OtherCharacter = *Iterator;
 			if(OtherCharacter && OtherCharacter != GetOwner())
 			{
-				ClientDrawDebugCapsule(
+				MulticastDrawDebugCapsule(
 					OtherCharacter->GetCapsuleComponent()->GetComponentLocation(),
 					OtherCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight(),
 					OtherCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius(),
@@ -238,7 +245,7 @@ void AWeapon::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 	}
 }
 
-void AWeapon::ClientDrawDebugCapsule_Implementation(const FVector& Center, float HalfHeight, float Radius,
+void AWeapon::MulticastDrawDebugCapsule_Implementation(const FVector_NetQuantize& Center, float HalfHeight, float Radius,
 	const FQuat& Rotation, const FColor& Color, bool bPersistentLines, float LiftTime)
 {
 	DrawDebugCapsule(
