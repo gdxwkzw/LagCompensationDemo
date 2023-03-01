@@ -2,8 +2,11 @@ Binaries
 DerivedDataCache
 Intermediate
 Saved
+Package
+Platforms
 .vscode
 .vs
+.idea
 *.VC.db
 *.opensdf
 *.opendb

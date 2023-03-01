@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "LagCompensationDemoCharacter.h"
+
+#include "DemoPlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -76,7 +78,8 @@ void ALagCompensationDemoCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	ADemoPlayerController* PlayerController = Cast<ADemoPlayerController>(Controller);
+	if (PlayerController)
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
@@ -95,6 +98,10 @@ void ALagCompensationDemoCharacter::BeginPlay()
 				{
 					HandSocket->AttachActor(Weapon, GetMesh());
 					Weapon->SetOwner(this);
+					if(PlayerController)
+					{
+						Weapon->bUseLagCompensation = PlayerController->bUseLagCompensation;
+					}
 				}
 			}
 			
@@ -176,6 +183,12 @@ void ALagCompensationDemoCharacter::SetupPlayerInputComponent(class UInputCompon
 
 		//Fire
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &ALagCompensationDemoCharacter::FireButtonPressed);
+
+		//Show Mouse Cursor
+		EnhancedInputComponent->BindAction(ShowCursorAction, ETriggerEvent::Triggered, this, &ALagCompensationDemoCharacter::ShowCursorButtonPressed);
+
+		//Hide Mouse Cursor
+		EnhancedInputComponent->BindAction(HideCursorAction, ETriggerEvent::Triggered, this, &ALagCompensationDemoCharacter::ShowCursorButtonRelease);
 	}
 
 }
@@ -224,6 +237,22 @@ void ALagCompensationDemoCharacter::FireButtonPressed()
 	if(Weapon)
 	{
 		Weapon->Fire();
+	}
+}
+
+void ALagCompensationDemoCharacter::ShowCursorButtonPressed()
+{
+	if(ADemoPlayerController* PlayerController = Cast<ADemoPlayerController>(Controller))
+	{
+		PlayerController->SetShowMouseCursor(true);
+	}
+}
+
+void ALagCompensationDemoCharacter::ShowCursorButtonRelease()
+{
+	if(ADemoPlayerController* PlayerController = Cast<ADemoPlayerController>(Controller))
+	{
+		PlayerController->SetShowMouseCursor(false);
 	}
 }
 

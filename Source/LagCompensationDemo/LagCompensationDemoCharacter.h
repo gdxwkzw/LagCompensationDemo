@@ -33,7 +33,7 @@ class ALagCompensationDemoCharacter : public ACharacter
 	TSubclassOf<class AWeapon> WeaponClass;
 
 	UPROPERTY(Replicated)
-	class AWeapon* Weapon;
+	AWeapon* Weapon;
 	
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -54,11 +54,21 @@ class ALagCompensationDemoCharacter : public ACharacter
 	/** Fire Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* FireAction;
+
+	/** Show Cursor Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* ShowCursorAction;
+
+	/** Hide Cursor Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* HideCursorAction;
 public:
 	ALagCompensationDemoCharacter();
 	void FireButtonPressed();
 	void Die();
 	void PlayHitReact();
+	void ShowCursorButtonRelease();
+	void ShowCursorButtonPressed();
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void Destroyed() override;
@@ -100,5 +110,6 @@ public:
 	FORCEINLINE UCapsuleComponent* GetLagCompensationHitBox() const { return LagCompensationHitBox; }
 	void SetLagCompensationHitBox(FVector Location);
 	FORCEINLINE ULagCompensationComponent* GetLagCompensationComponent() const { return LagCompensationComponent; }
+	FORCEINLINE AWeapon* GetWeapon() const { return Weapon; }
 };
 

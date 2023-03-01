@@ -68,11 +68,11 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package)
 			false,
 			MaxRecordTime
 		);
-
-		AWeapon* Weapon = GetOwner<AWeapon>();
+		
+		AWeapon* Weapon = DemoCharacter->GetWeapon();
 		if(Weapon && Weapon->bClientDrawDebugCapsule)
 		{
-			Weapon->ClientDrawDebugCapsule(
+			Weapon->MulticastDrawDebugCapsule(
 				Package.HitBoxLocation,
 				DemoCharacter->GetLagCompensationHitBox()->GetScaledCapsuleHalfHeight(),
 				DemoCharacter->GetLagCompensationHitBox()->GetScaledCapsuleRadius(),
