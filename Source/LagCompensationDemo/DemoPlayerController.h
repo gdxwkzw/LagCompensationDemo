@@ -36,6 +36,13 @@ public:
 
 	UPROPERTY()
 	ADemoHUD* DemoHUD;
+
+	UPROPERTY(Replicated)
+	bool bUseLagCompensation = false;
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetUseLagCompensation(bool bUse);
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
