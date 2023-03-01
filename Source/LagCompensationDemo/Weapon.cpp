@@ -97,7 +97,6 @@ void AWeapon::LocalFire(FVector TraceEnd)
 	DrawDebugLine(GetWorld(), SocketTransform.GetLocation(), TraceEnd, FColor::Green, true);
 	if(HitResult.bBlockingHit)
 	{
-		DrawDebugSphere(GetWorld(), HitResult.Location, 8.f, 12, FColor::Orange);
 		BeamEnd = HitResult.Location;
 		if(MuzzleFlash)
 		{
@@ -106,6 +105,20 @@ void AWeapon::LocalFire(FVector TraceEnd)
 			
 		if(ALagCompensationDemoCharacter* HitCharacter = Cast<ALagCompensationDemoCharacter>(HitResult.GetActor()))
 		{
+			if(bClientDrawDebugCapsule && HitCharacter->GetCapsuleComponent())
+			{
+				DrawDebugCapsule(
+					GetWorld(),
+					HitCharacter->GetCapsuleComponent()->GetComponentLocation(),
+					HitCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight(),
+					HitCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius(),
+					HitCharacter->GetCapsuleComponent()->GetComponentRotation().Quaternion(),
+					FColor::Orange,
+					false,
+					4.f)
+				;
+			}
+			
 			HitCharacter->PlayHitReact();
 		}
 	}
