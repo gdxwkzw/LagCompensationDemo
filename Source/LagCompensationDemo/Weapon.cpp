@@ -94,7 +94,7 @@ void AWeapon::LocalFire(FVector TraceEnd)
 	);
 
 	FVector BeamEnd = TraceEnd;
-	DrawDebugLine(GetWorld(), SocketTransform.GetLocation(), TraceEnd, FColor::Green, true);
+	DrawDebugLine(GetWorld(), SocketTransform.GetLocation(), TraceEnd, FColor::Green, false, 10.f);
 	if(HitResult.bBlockingHit)
 	{
 		BeamEnd = HitResult.Location;
@@ -176,7 +176,8 @@ void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 					OtherCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius(),
 					OtherCharacter->GetCapsuleComponent()->GetComponentRotation().Quaternion(),
 					FColor::Red,
-					true
+					false,
+					10.f
 				);
 			}
 		}

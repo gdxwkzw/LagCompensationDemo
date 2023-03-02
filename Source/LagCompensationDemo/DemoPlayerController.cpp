@@ -20,7 +20,7 @@ void ADemoPlayerController::ClientRequestServerTime_Implementation(float TimeOfC
 {
 	float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
 	SingleTripTime = 0.5f * RoundTripTime;
-	float CurrentServerTime = TimeServerReceivedClientRequest + RoundTripTime;
+	float CurrentServerTime = TimeServerReceivedClientRequest + SingleTripTime;
 	ClientServerDelta = GetWorld()->GetTimeSeconds() - CurrentServerTime;
 
 	//Update PingHUD
