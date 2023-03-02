@@ -36,6 +36,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:
 	void Fire();
 
@@ -50,7 +51,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerFireWithLagCompensation(ALagCompensationDemoCharacter* HitCharacter, FVector TraceEnd, float HitTime);
 
-	UPROPERTY(EditAnywhere, Category = Weapon)
+	UPROPERTY(Replicated)
 	bool bUseLagCompensation = false;
 private:
 	FHitResult TraceEndResult;
@@ -61,7 +62,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = Debug)
 	bool bClientDrawDebugCapsule;
 	
-	UFUNCTION(Client, Reliable)
-	void ClientDrawDebugCapsule(const FVector& Center, float HalfHeight, float Radius, const FQuat& Rotation, const FColor& Color, bool bPersistentLines = false, float LiftTime = -1);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastDrawDebugCapsule(const FVector_NetQuantize& Center, float HalfHeight, float Radius, const FQuat& Rotation, const FColor& Color, bool bPersistentLines = false, float LiftTime = -1);
 	/** Debug End*/
 };

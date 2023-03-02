@@ -3,7 +3,10 @@
 
 #include "DemoPlayerController.h"
 
+#include "LagCompensationDemoCharacter.h"
 #include "UI_Ping.h"
+#include "Weapon.h"
+#include "Net/UnrealNetwork.h"
 
 
 void ADemoPlayerController::ServerRequestServerTime_Implementation(float TimeOfClientRequest)
@@ -17,7 +20,7 @@ void ADemoPlayerController::ClientRequestServerTime_Implementation(float TimeOfC
 {
 	float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
 	SingleTripTime = 0.5f * RoundTripTime;
-	float CurrentServerTime = TimeServerReceivedClientRequest + RoundTripTime;
+	float CurrentServerTime = TimeServerReceivedClientRequest + SingleTripTime;
 	ClientServerDelta = GetWorld()->GetTimeSeconds() - CurrentServerTime;
 
 	//Update PingHUD
@@ -69,4 +72,23 @@ void ADemoPlayerController::BeginPlay()
 	{
 		DemoHUD->AddPingUI();
 	}
+}
+
+void ADemoPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ADemoPlayerController, bUseLagCompensation);
+}
+
+void ADemoPlayerController::ServerSetUseLagCompensation_Implementation(bool bUse)
+{
+	bUseLagCompensation = bUse;
+	if(ALagCompensationDemoCharacter* ControlCharacter = GetPawn<ALagCompensationDemoCharacter>())
+	{
+		if(AWeapon* ControlWeapon = ControlCharacter->GetWeapon())
+		{
+			ControlWeapon->bUseLagCompensation = bUse;
+		}
+	}
+	
 }

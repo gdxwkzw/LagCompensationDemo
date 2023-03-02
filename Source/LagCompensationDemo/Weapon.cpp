@@ -11,6 +11,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #define TRACE_LENGTH 99999.f
@@ -33,6 +34,12 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWeapon, bUseLagCompensation);
 }
 
 void AWeapon::Fire()
@@ -87,10 +94,9 @@ void AWeapon::LocalFire(FVector TraceEnd)
 	);
 
 	FVector BeamEnd = TraceEnd;
-	DrawDebugLine(GetWorld(), SocketTransform.GetLocation(), TraceEnd, FColor::Green, true);
+	DrawDebugLine(GetWorld(), SocketTransform.GetLocation(), TraceEnd, FColor::Green, false, 10.f);
 	if(HitResult.bBlockingHit)
 	{
-		DrawDebugSphere(GetWorld(), HitResult.Location, 8.f, 12, FColor::Orange);
 		BeamEnd = HitResult.Location;
 		if(MuzzleFlash)
 		{
@@ -99,6 +105,20 @@ void AWeapon::LocalFire(FVector TraceEnd)
 			
 		if(ALagCompensationDemoCharacter* HitCharacter = Cast<ALagCompensationDemoCharacter>(HitResult.GetActor()))
 		{
+			if(bClientDrawDebugCapsule && HitCharacter->GetCapsuleComponent())
+			{
+				DrawDebugCapsule(
+					GetWorld(),
+					HitCharacter->GetCapsuleComponent()->GetComponentLocation(),
+					HitCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight(),
+					HitCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius(),
+					HitCharacter->GetCapsuleComponent()->GetComponentRotation().Quaternion(),
+					FColor::Orange,
+					false,
+					4.f)
+				;
+			}
+			
 			HitCharacter->PlayHitReact();
 		}
 	}
@@ -150,13 +170,14 @@ void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 			ALagCompensationDemoCharacter* OtherCharacter = *Iterator;
 			if(OtherCharacter && OtherCharacter != GetOwner())
 			{
-				ClientDrawDebugCapsule(
+				MulticastDrawDebugCapsule(
 					OtherCharacter->GetCapsuleComponent()->GetComponentLocation(),
 					OtherCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight(),
 					OtherCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius(),
 					OtherCharacter->GetCapsuleComponent()->GetComponentRotation().Quaternion(),
 					FColor::Red,
-					true
+					false,
+					10.f
 				);
 			}
 		}
@@ -238,7 +259,7 @@ void AWeapon::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 	}
 }
 
-void AWeapon::ClientDrawDebugCapsule_Implementation(const FVector& Center, float HalfHeight, float Radius,
+void AWeapon::MulticastDrawDebugCapsule_Implementation(const FVector_NetQuantize& Center, float HalfHeight, float Radius,
 	const FQuat& Rotation, const FColor& Color, bool bPersistentLines, float LiftTime)
 {
 	DrawDebugCapsule(
