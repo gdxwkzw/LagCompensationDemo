@@ -159,6 +159,14 @@ void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 		ECollisionChannel::ECC_Pawn
 	);
 
+	if(HitResult.bBlockingHit)
+	{
+		if(ALagCompensationDemoCharacter* HitCharacter = Cast<ALagCompensationDemoCharacter>(HitResult.GetActor()))
+		{
+			HitCharacter->Die();
+		}
+	}
+
 	/** When lag compensation is not used,
 	 * the position of the character on the server
 	 * at the time of hit confimed is displayed.
@@ -183,14 +191,6 @@ void AWeapon::ServerFire_Implementation(FVector TraceEnd)
 		}
 	}
 	/** ---------------------------------------------- */
-
-	if(HitResult.bBlockingHit)
-	{
-		if(ALagCompensationDemoCharacter* HitCharacter = Cast<ALagCompensationDemoCharacter>(HitResult.GetActor()))
-		{
-			HitCharacter->Die();
-		}
-	}
 }
 
 void AWeapon::ServerFireWithLagCompensation_Implementation(ALagCompensationDemoCharacter* HitCharacter, FVector TraceEnd, float HitTime)

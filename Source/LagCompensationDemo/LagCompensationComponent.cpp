@@ -168,7 +168,6 @@ void ULagCompensationComponent::ServerHitComfirm_Implementation(ALagCompensation
 {
 	if(HitCharacter == nullptr) return;
 	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
-	ShowFramePackage(FrameToCheck);
 	FFramePackage CurrentFrame;
 	CacheFramePackage(HitCharacter, CurrentFrame);
 
@@ -192,6 +191,7 @@ void ULagCompensationComponent::ServerHitComfirm_Implementation(ALagCompensation
 	// Reset hitbox 把HitBox位置挪回来并关闭碰撞检测
 	HitCharacter->SetLagCompensationHitBox(CurrentFrame.HitBoxLocation);
 	HitCharacter->GetLagCompensationHitBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ShowFramePackage(FrameToCheck);
 }
 
 // Called when the game starts
