@@ -12,9 +12,9 @@ Developed with Unreal Engine 5.1.0
 
 * * *  
 
-科普篇：  
+科普篇：  [科普向：竞技游戏的延迟与延迟补偿]( https://www.bilibili.com/video/BV1Jb411Q7CH)
 
-硬核篇：  
+硬核篇：  [硬核向：延迟补偿具体实现算法](https://www.bilibili.com/video/BV1cM4y1d7DR)
 
 # 资源
 
@@ -95,5 +95,3 @@ exit 退出游戏
 PktLag = 500  
 
 可修改这个值来改变测试的延迟
-
-
